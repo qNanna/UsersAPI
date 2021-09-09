@@ -1,11 +1,10 @@
-import { Controller, Post, Req, Res, Next, Get, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Req, Res, Next, Get, Body } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import * as chalk from 'chalk';
 
 import { UserService }  from '../../services/user.service'
 import { Utils } from '../../utils/index';
 import { UserBody } from '../../dto/user.dto';
-import { AuthMiddleware } from '../../middlewares/auth.middleware';
 
 @Controller('users')
 export class UserController {
@@ -55,6 +54,7 @@ export class UserController {
         }
   
         delete user.password;
+        delete user.token;
         res.status(200).json({ user });
       } catch (err) {
         console.error(chalk.red(err));

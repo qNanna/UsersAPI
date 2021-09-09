@@ -9,7 +9,7 @@ class UserRepository {
     return db(tableName).select('*').where(prop, value).limit(-1);
   }
 
-  async updateValue(id: number, prop, value = null) : Promise<any> {
+  async updateValue(id: number, prop: string, value = null) : Promise<any> {
     return db('users').where('id', id).update(prop, value);
   }
 
