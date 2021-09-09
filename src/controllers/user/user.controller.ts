@@ -1,42 +1,43 @@
-import { Controller, Post, Req, Res, Next, Get, Body } from '@nestjs/common';
+import { Controller, Post, Req, Res, Next, Get, Body, UseGuards } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import * as chalk from 'chalk';
 
 import { UserService }  from '../../services/user.service'
-import { Utils } from '../../../utils/index';
+import { Utils } from '../../utils/index';
 import { UserBody } from '../../dto/user.dto';
+import { AuthMiddleware } from '../../middlewares/auth.middleware';
 
 @Controller('users')
 export class UserController {
     constructor(private readonly userService: UserService) {}
     @Post('/signUp')
     async register(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
-        try {
-            const {
-              first_name, last_name, email, age, password,
-            } = req.body;
+      try {
+          const {
+            first_name, last_name, email, age, password,
+          } = req.body;
 
-            const userEmail = email.toLowerCase();
-            if (!Utils.isEmail(userEmail)) {
-              res.status(400).json('Invalid email');
-              return;
-            }
-
-            const user = await this.userService.findOne(userEmail, 'email');
-            if (user) {
-              res.status(400).json(`User with email: ${email} already exists`);
-              return;
-            }
-
-            const id = await this.userService.insert({
-              first_name, last_name, email: userEmail, age, password,
-            });
-      
-            res.status(201).json(id);
-          } catch (err) {
-            console.error(chalk.red(err));
-            next(err);
+          const userEmail = email.toLowerCase();
+          if (!Utils.isEmail(userEmail)) {
+            res.status(400).json('Invalid email');
+            return;
           }
+
+          const user = await this.userService.findOne(userEmail, 'email');
+          if (user) {
+            res.status(400).json(`User with email: ${email} already exists`);
+            return;
+          }
+
+          const id = await this.userService.insert({
+            first_name, last_name, email: userEmail, age, password,
+          });
+    
+          res.status(201).json(id);
+        } catch (err) {
+          console.error(chalk.red(err));
+          next(err);
+        }
     }
 
     @Get()
@@ -54,7 +55,6 @@ export class UserController {
         }
   
         delete user.password;
-        delete user.token;
         res.status(200).json({ user });
       } catch (err) {
         console.error(chalk.red(err));

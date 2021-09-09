@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import { Utils } from 'utils/index';
-import config from '../../config/index';
-import db from '../../database/userRepository';
+import { Utils } from '../utils/index';
+import config from '../config/index';
+import db from '../database/userRepository';
 
 @Injectable()
 export class UserService {
