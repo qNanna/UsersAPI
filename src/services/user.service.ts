@@ -16,8 +16,7 @@ export class UserService {
       }
 
       async insert(data: any) : Promise<any> {
-        const password = Utils.encryptData(data.password, config.cryptoSecretKey);
-        const [insert] = await db.insertToTable({ ...data, password }, 'users');
+        const [insert] = await db.insertToTable({ ...data }, 'users');
         return insert;
       }
 }

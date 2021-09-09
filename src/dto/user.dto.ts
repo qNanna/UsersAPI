@@ -1,11 +1,20 @@
-export interface UserBody {
+import { Allow } from 'class-validator'
+
+export class UserBody {
+    @Allow()
     readonly email: string;
-    readonly password?: string | number;
+    @Allow()
+    readonly password: number | string;
+    @Allow()
     readonly id?: number;
-    readonly first_name?: string;
-    readonly last_name?: string;
-    readonly age?: number;
+    @Allow()
+    readonly first_name: string;
+    @Allow()
+    readonly last_name: string;
+    @Allow()
+    readonly age: number;
+    @Allow()
     readonly acessToken?: string;
+    @Allow()
     readonly refreshToken?: string;
 }
-
