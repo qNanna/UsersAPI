@@ -11,11 +11,10 @@ export class AuthMiddleware implements NestMiddleware {
     }
       const bearerHeader = req.headers.authorization;
       const [, token] = bearerHeader.split(' ');
-      
       try {
         req.user = jwt.verify(token, config.jwtTokenKey);
       } catch (err) {
-        return res.status(401).send('Invalid Token');
+        return res.status(401).json('Invalid Token');
       }
     next();
   }
