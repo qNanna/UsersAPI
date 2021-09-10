@@ -1,5 +1,5 @@
-import { Controller, Post, Req, Res, Next, Get, Body, UsePipes, ValidationPipe, Patch } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Controller, Post, Res, Next, Get, Body, UsePipes, ValidationPipe, Patch, Query, Param } from '@nestjs/common';
+import { Response, NextFunction } from 'express';
 import * as chalk from 'chalk';
 
 import { UserService }  from 'src/services/user.service'
@@ -10,46 +10,39 @@ import { UserBody } from 'src/dto/user.dto';
 @Controller('api/v1/users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-  @Get()
-  async getUser(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  @Get('email')
+  async getUserByEmail(@Query('email') email: string, @Res() res: Response, @Next() next: NextFunction) {
+    if (!email) {
+      res.status(400).json('No email provided!');
+      return;
+    }
+
     try {
-      const id = req.query.id || !req.params.id || req.body.id;
-      if (!id) {
-        res.status(400).json('A id is requested');
-        return;
-      }
-
-      const user = await this.userService.findOne(id, 'id');
+      const user = await this.userService.findOne(email.toLowerCase(), 'email');
       if (!user) {
-        res.status(400).json(`User with id: ${id} not found`);
+        res.status(404).json('User not found');
         return;
       }
 
-      // delete user.password;
-      // delete user.token;
-      res.json({ user });
+      const { token } = await this.userService.findToken(user.id, 'userId')
+      res.json({ ...user, token })
     } catch (err) {
       console.error(chalk.red(err));
       next(err);
     }
   }
 
-  @Post('/byCredentials')
-  async getUserByCredentials(@Body() userDto: UserBody, @Res() res: Response, @Next() next: NextFunction) {
+  @Get(':id')
+  async getUser(@Param('id') id: string, @Res() res: Response, @Next() next: NextFunction) {
     try {
-      if (!userDto.email && !userDto.password) {
-        res.status(400).json('Invalid credentials!');
+      const user = await this.userService.findOne(id, 'id');
+      if (!user) {
+        res.status(400).json(`User with id: ${id} not found`);
         return;
       }
-      const user = await this.userService.findOne(userDto.email.toLowerCase(), 'email');
-      if (!user || userDto.password !== user.password) {
-        res.status(400).json('Invalid credentials');
-        return;
-      }
-
-      delete user.token;
-
-      res.json(user)
+      
+      const { token } = await this.userService.findToken(user.id, 'userId')
+      res.json({ ...user, token });
     } catch (err) {
       console.error(chalk.red(err));
       next(err);
@@ -78,7 +71,7 @@ export class UserController {
       }
 
       const password = utils.encryptData(userDto.password.toString(), config.cryptoSecretKey);
-      const id = await this.userService.insert({ ...userDto, password, email: userEmail });
+      const id = await this.userService.insert({ ...userDto, password, email: userEmail }, 'users');
 
       res.json(id)
     } catch (err) {
@@ -88,22 +81,28 @@ export class UserController {
   }
 
   @Patch()
-  async updateToken(@Body() body: any, @Res() res: Response, @Next() next: NextFunction){
+  async updateToken(@Body('refreshToken') refreshToken: string, @Res() res: Response, @Next() next: NextFunction){
     try {
-      if(!body.refreshToken) {
+      if(!refreshToken) {
         res.status(400).json('A token is required!');
         return;
       }
-
-      const token = utils.jwtVerify(body.refreshToken, config.jwtTokenKey)
-      if (token.error) {
-        res.status(400).json(token);
+      
+      const jwt = utils.jwtVerify(refreshToken, config.jwtTokenKey)
+      if (jwt.error) {
+        res.status(400).json('Token was expired!');
         return;
       }
       
-      const result = await this.userService.updateValue(token.id, 'token', body.refreshToken)
-
-      res.json(`Updated: ${result}`)
+      const token = await this.userService.findToken(jwt.id, 'userId');
+      if (!token) {
+        const insert = await this.userService.insertToken({ userId: jwt.id, token: refreshToken })
+        res.json(insert);
+        return;
+      }
+      
+      const result = await this.userService.updateToken(refreshToken, jwt.id)
+      res.json(result)
     } catch (err) {
       console.error(chalk.red(err));
       next(err);
