@@ -2,11 +2,14 @@ import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/c
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user/user.controller';
 import { AuthMiddleware } from './middlewares/auth.middleware';
+import { TokensController } from './controllers/tokens/tokens.controller';
+import { TokenService } from './services/token.service';
+import { Utils } from './utils';
 
 @Module({
   imports: [],
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [UserController, TokensController],
+  providers: [UserService, TokenService, Utils],
 })
 
 export class AppModule implements NestModule {
