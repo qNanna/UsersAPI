@@ -1,4 +1,4 @@
-import { Allow, IsDefined, ValidateNested } from 'class-validator'
+import { Allow, IsDefined } from 'class-validator'
 
 export class UserBody {
     @Allow() @IsDefined()

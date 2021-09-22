@@ -68,9 +68,9 @@ export class UserController {
       }
 
       const password = this.utils.encryptData(userDto.password.toString(), config.cryptoSecretKey);
-      const id = await this.userService.insert({ ...userDto, password, email: userEmail }, 'users');
+      await this.userService.insert({ ...userDto, password, email: userEmail }, 'users');
 
-      res.json(id)
+      res.status(201).json('Created');
     } catch (err) {
       console.error(chalk.red(err));
       next(err);

@@ -9,6 +9,7 @@ dotenv.config({
 export default {
   host: process.env.HOST || '127.0.0.1',
   port: process.env.PORT || 3054,
+  dataBase: process.env.DATA_BASE,
   sqlitePath: process.env.SQLITE_PATH || 'src/database/sqlite.db',
   jwtTokenKey: process.env.JWT_TOKEN_KEY,
   jwtTokenLife: process.env.JWT_TOKEN_LIFE || '2h',

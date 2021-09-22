@@ -6,7 +6,7 @@ class UserRepository {
   }
 
   async findOne(value: string, prop = 'email', tableName = 'users') : Promise<any> {
-    return db(tableName).select('*').where(prop, value).limit(-1);
+    return db(tableName).select('*').where(prop, value).limit(1);
   }
 
   async find(value: string, tableName = 'users', prop = 'email') : Promise<any> {

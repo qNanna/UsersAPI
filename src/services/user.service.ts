@@ -10,7 +10,6 @@ export class UserService {
   }
 
   async insert(data: any, prop: string) : Promise<any> {
-    const [insert] = await dbUsers.insertToTable({ ...data }, prop);
-    return insert;
+    return dbUsers.insertToTable({ ...data }, prop);
   }
 }
