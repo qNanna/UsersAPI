@@ -1,20 +1,20 @@
-import { Allow } from 'class-validator'
+import { Allow, IsDefined } from 'class-validator'
 
 export class UserBody {
-    @Allow()
+    @Allow() @IsDefined()
     readonly email: string;
-    @Allow()
+    @Allow() @IsDefined()
     readonly password: number | string;
-    @Allow()
-    readonly id?: number;
-    @Allow()
+    @Allow() @IsDefined()
     readonly first_name: string;
-    @Allow()
+    @Allow() @IsDefined()
     readonly last_name: string;
-    @Allow()
+    @Allow() @IsDefined()
     readonly age: number;
-    @Allow()
+    @Allow() 
+    readonly id?: number;
+    @Allow() 
     readonly acessToken?: string;
-    @Allow()
+    @Allow() 
     readonly refreshToken?: string;
 }

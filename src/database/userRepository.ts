@@ -6,11 +6,7 @@ class UserRepository {
   }
 
   async findOne(value: string, prop = 'email', tableName = 'users') : Promise<any> {
-    return db(tableName).select('*').where(prop, value).limit(-1);
-  }
-
-  async updateValue(id: number, prop: string, value = null) : Promise<any> {
-    return db('users').where('id', id).update(prop, value);
+    return db(tableName).select('*').where(prop, value).limit(1);
   }
 
   async find(value: string, tableName = 'users', prop = 'email') : Promise<any> {

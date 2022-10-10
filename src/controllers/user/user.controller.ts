@@ -1,55 +1,45 @@
-import { Controller, Post, Req, Res, Next, Get, Body, UsePipes, ValidationPipe, Patch } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Controller, Post, Res, Next, Get, Body, UsePipes, ValidationPipe, Query, Param } from '@nestjs/common';
+import { Response, NextFunction } from 'express';
 import * as chalk from 'chalk';
 
-import { UserService }  from 'src/services/user.service'
+import { UserService }  from 'src/services/user.service';
 import config from 'src/config';
-import { Utils as utils } from 'src/utils/index';
+import { Utils } from 'src/utils/index';
 import { UserBody } from 'src/dto/user.dto';
 
 @Controller('api/v1/users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
-  @Get()
-  async getUser(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  constructor(private readonly userService: UserService, private readonly utils: Utils) {}
+  @Get('email')
+  async getUserByEmail(@Query('email') email: string, @Res() res: Response, @Next() next: NextFunction) {
+    if (!email) {
+      res.status(400).json('No email provided!');
+      return;
+    }
     try {
-      const id = req.query.id || !req.params.id || req.body.id;
-      if (!id) {
-        res.status(400).json('A id is requested');
-        return;
-      }
-
-      const user = await this.userService.findOne(id, 'id');
+      const user = await this.userService.findOne(email.toLowerCase(), 'email');
       if (!user) {
-        res.status(400).json(`User with id: ${id} not found`);
+        res.status(404).json('User not found');
         return;
       }
 
-      // delete user.password;
-      // delete user.token;
-      res.json({ user });
+      res.json({ ...user })
     } catch (err) {
       console.error(chalk.red(err));
       next(err);
     }
   }
 
-  @Post('/byCredentials')
-  async getUserByCredentials(@Body() userDto: UserBody, @Res() res: Response, @Next() next: NextFunction) {
+  @Get(':id')
+  async getUser(@Param('id') id: string, @Res() res: Response, @Next() next: NextFunction) {
     try {
-      if (!userDto.email && !userDto.password) {
-        res.status(400).json('Invalid credentials!');
+      const user = await this.userService.findOne(id, 'id');
+      if (!user) {
+        res.status(404).json(`User with id: ${id} not found`);
         return;
       }
-      const user = await this.userService.findOne(userDto.email.toLowerCase(), 'email');
-      if (!user || userDto.password !== user.password) {
-        res.status(400).json('Invalid credentials');
-        return;
-      }
-
-      delete user.token;
-
-      res.json(user)
+      
+      res.json({ ...user });
     } catch (err) {
       console.error(chalk.red(err));
       next(err);
@@ -66,7 +56,7 @@ export class UserController {
       }
 
       const userEmail = userDto.email.toLowerCase();
-      if (!utils.isEmail(userEmail)) {
+      if (!this.utils.isEmail(userEmail)) {
         res.status(400).json('Invalid email');
         return;
       }
@@ -77,33 +67,10 @@ export class UserController {
         return;
       }
 
-      const password = utils.encryptData(userDto.password.toString(), config.cryptoSecretKey);
-      const id = await this.userService.insert({ ...userDto, password, email: userEmail });
+      const password = this.utils.encryptData(userDto.password.toString(), config.cryptoSecretKey);
+      await this.userService.insert({ ...userDto, password, email: userEmail }, 'users');
 
-      res.json(id)
-    } catch (err) {
-      console.error(chalk.red(err));
-      next(err);
-    }
-  }
-
-  @Patch()
-  async updateToken(@Body() body: any, @Res() res: Response, @Next() next: NextFunction){
-    try {
-      if(!body.refreshToken) {
-        res.status(400).json('A token is required!');
-        return;
-      }
-
-      const token = utils.jwtVerify(body.refreshToken, config.jwtTokenKey)
-      if (token.error) {
-        res.status(400).json(token);
-        return;
-      }
-      
-      const result = await this.userService.updateValue(token.id, 'token', body.refreshToken)
-
-      res.json(`Updated: ${result}`)
+      res.status(201).json('Created');
     } catch (err) {
       console.error(chalk.red(err));
       next(err);

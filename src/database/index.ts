@@ -10,4 +10,9 @@ const db = knex({
   useNullAsDefault: false,
 });
 
+db.migrate.latest().then(
+  ([, log]) => console.info(!log.length ? 'Database migrated' : 'Ran migrations: \n' + log.join('\n')),
+  err => console.error(err)
+);
+
 export default db;
